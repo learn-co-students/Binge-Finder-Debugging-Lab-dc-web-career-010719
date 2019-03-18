@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Filter = (props) => {
+export default (props) => {
   return (
     <div>
     <h4> Filter By Rating </h4>
