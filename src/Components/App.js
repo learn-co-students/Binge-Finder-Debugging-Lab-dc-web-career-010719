@@ -14,36 +14,63 @@ class App extends Component {
     selectedShow: "",
     episodes: [],
     filterByRating: "",
+    searchPage: 1
   }
 
   componentDidMount = () => {
-    Adapter.getShows().then(shows => this.setState({shows}))
+    this.refs.iScroll.addEventListener("scroll", () => {
+      if (
+        this.refs.iScroll.scrollTop + this.refs.iScroll.clientHeight >=
+        this.refs.iScroll.scrollHeight
+      ) {
+        this.handleScroll()
+      }
+    })
+    Adapter.getShows(this.state.searchPage)
+    .then(shows => this.setState({
+      shows,
+      searchPage: this.state.searchPage + 1
+    }))
   }
 
   componentDidUpdate = () => {
     window.scrollTo(0, 0)
   }
 
-  handleSearch (e){
+  handleScroll = () => {
+    Adapter.getShows(this.state.searchPage)
+    .then(shows => this.setState({
+      shows: [...this.state.shows, shows],
+      searchPage: this.state.searchPage + 1
+    }))
+  }
+
+
+  handleSearch = (e) => {
     this.setState({ searchTerm: e.target.value.toLowerCase() })
   }
 
   handleFilter = (e) => {
-    e.target.value === "No Filter" ? this.setState({ filterRating:"" }) : this.setState({ filterRating: e.target.value})
+    e.target.value === "No Filter" ? this.setState({ filterByRating: "" }) : this.setState({ filterByRating: e.target.value})
   }
 
   selectShow = (show) => {
-    Adapter.getShowEpisodes(show.id)
-    .then((episodes) => this.setState({
-      selectedShow: show,
-      episodes
-    }))
+    if (this.state.selectedShow === show) {
+      this.setState({selectedShow: ""})
+    } else {
+      Adapter.getShowEpisodes(show.id)
+      .then((episodes) => {
+        this.setState({
+        selectedShow: show,
+        episodes
+      })})
+    }
   }
 
   displayShows = () => {
-    if (this.state.filterByRating){
+    if (this.state.filterByRating) {
       return this.state.shows.filter((s)=> {
-        return s.rating.average >= this.state.filterByRating
+        return s.rating.average >= parseInt(this.state.filterByRating, 10)
       })
     } else {
       return this.state.shows
@@ -52,7 +79,7 @@ class App extends Component {
 
   render (){
     return (
-      <div>
+      <div ref="iScroll" style={{height: "5000px" ,overflow: "auto"}}>
         <Nav handleFilter={this.handleFilter} handleSearch={this.handleSearch} searchTerm={this.state.searchTerm}/>
         <Grid celled>
           <Grid.Column width={5}>
